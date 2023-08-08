@@ -1,0 +1,10 @@
+for i, part in pairs(workspace.HornsFolder:GetChildren()) do
+   for i, obj in pairs(part:GetChildren()) do
+      if obj.Name == "Horns" then
+         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+         wait(1)
+      end
+   end
+end
+
+game:GetService("Players").LocalPlayer.GameTime.Value = 3610
