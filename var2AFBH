@@ -1,0 +1,381 @@
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Variables
+local player = Players.LocalPlayer
+local character = nil
+local humanoidRootPart = nil
+local autoActivateEnabled = false
+local menuActive = false
+local menuDragging = false
+local dragOffset = Vector2.new(0, 0)
+local currentTarget = nil
+local processing = false
+local lastProcessTime = 0
+local fillLine = nil
+local fillBar = nil
+local fillStartTime = 0
+local isFilling = false
+
+-- Configuration
+local USE_TELEPORT = false
+local SEARCH_PATTERN = "{"
+local CHECK_INTERVAL = 0.3
+local DEBOUNCE_TIME = 0.1
+local FULL_SCAN_INTERVAL = 5
+
+-- Cache frequently used functions
+local FindFirstChild = game.FindFirstChild
+local IsA = game.IsA
+local Wait = task.wait
+local Spawn = task.spawn
+local GetDescendants = workspace.GetDescendants
+local GetChildren = game.GetChildren
+local clock = os.clock
+local insert = table.insert
+local remove = table.remove
+
+-- Character management
+local function setupCharacter(newCharacter)
+    character = newCharacter
+    humanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+
+    local humanoid = newCharacter:WaitForChild("Humanoid")
+    humanoid.Died:Connect(function()
+        Wait(3) -- Wait for respawn
+        setupCharacter(player.CharacterAdded:Wait())
+    end)
+end
+
+setupCharacter(player.Character or player.CharacterAdded:Wait())
+
+-- Create GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GUIDActivatorGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 320, 0, 220)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -110)
+mainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = false
+mainFrame.Parent = screenGui
+
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleText = Instance.new("TextLabel")
+titleText.Name = "TitleText"
+titleText.Size = UDim2.new(1, 0, 1, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "GUID Object Activator"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.Font = Enum.Font.SourceSansBold
+titleText.TextSize = 18
+titleText.Parent = titleBar
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 40, 0, 40)
+toggleButton.Position = UDim2.new(1, -40, 1, -40)
+toggleButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+toggleButton.Text = "≡"
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 24
+toggleButton.Parent = screenGui
+
+local toggleActivateButton = Instance.new("TextButton")
+toggleActivateButton.Name = "ToggleActivateButton"
+toggleActivateButton.Size = UDim2.new(0.8, 0, 0, 40)
+toggleActivateButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+toggleActivateButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+toggleActivateButton.Text = "Enable Auto-Activation"
+toggleActivateButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleActivateButton.Font = Enum.Font.SourceSans
+toggleActivateButton.TextSize = 16
+toggleActivateButton.Parent = mainFrame
+
+local statusText = Instance.new("TextLabel")
+statusText.Name = "StatusText"
+statusText.Size = UDim2.new(0.8, 0, 0, 40)
+statusText.Position = UDim2.new(0.1, 0, 0.45, 0)
+statusText.BackgroundTransparency = 1
+statusText.Text = "Status: Off"
+statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusText.Font = Enum.Font.SourceSans
+statusText.TextSize = 14
+statusText.TextWrapped = true
+statusText.Parent = mainFrame
+
+-- Egg info UI
+local currentEggsText = Instance.new("TextLabel")
+currentEggsText.Name = "CurrentEggsText"
+currentEggsText.Size = UDim2.new(0.8, 0, 0, 20)
+currentEggsText.Position = UDim2.new(0.1, 0, 0.58, 0)
+currentEggsText.BackgroundTransparency = 1
+currentEggsText.TextColor3 = Color3.fromRGB(255, 255, 255)
+currentEggsText.Font = Enum.Font.SourceSans
+currentEggsText.TextSize = 14
+currentEggsText.Text = "Current eggs: 0"
+currentEggsText.Parent = mainFrame
+
+fillLine = Instance.new("Frame")
+fillLine.Name = "FillLine"
+fillLine.Size = UDim2.new(0.8, 0, 0, 6)
+fillLine.Position = UDim2.new(0.1, 0, 0.7, 0)
+fillLine.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+fillLine.BorderSizePixel = 0
+fillLine.Parent = mainFrame
+
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(1, 0)
+fillCorner.Parent = fillLine
+
+fillBar = Instance.new("Frame")
+fillBar.Size = UDim2.new(0, 0, 1, 0)
+fillBar.Position = UDim2.new(0, 0, 0, 0)
+fillBar.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+fillBar.BorderSizePixel = 0
+fillBar.Parent = fillLine
+
+local fillBarCorner = Instance.new("UICorner")
+fillBarCorner.CornerRadius = UDim.new(1, 0)
+fillBarCorner.Parent = fillBar
+
+-- RunService loop to update bar
+RunService.RenderStepped:Connect(function()
+    if autoActivateEnabled and isFilling then
+        local elapsed = tick() - fillStartTime
+        local percent = math.clamp(elapsed / 31, 0, 1)
+        fillBar.Size = UDim2.new(percent, 0, 1, 0)
+
+        if percent >= 1 and elapsed >= 28 then
+            isFilling = false
+            fillBar.Size = UDim2.new(0, 0, 1, 0)
+        end
+    end
+end)
+
+local function restartFillTimer()
+    if autoActivateEnabled then
+        fillStartTime = tick()
+        isFilling = true
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    local current = player.DataFolder.EggsCount.Value
+    currentEggsText.Text = "Current eggs: " .. tostring(current)
+
+    local now = tick()
+    local elapsed = now - fillStartTime
+
+    if restartAfterFull and elapsed > 0.5 then
+        fillStartTime = now
+        restartAfterFull = false
+        elapsed = 0
+    end
+
+    if elapsed <= maxFillDuration then
+        local progress = math.clamp(elapsed / maxFillDuration, 0, 1)
+        fillBar.Size = UDim2.new(progress, 0, 1, 0)
+    elseif not restartAfterFull then
+        fillBar.Size = UDim2.new(1, 0, 1, 0)
+        restartAfterFull = true
+    end
+end)
+
+local targetText = Instance.new("TextLabel")
+targetText.Name = "TargetText"
+targetText.Size = UDim2.new(0.8, 0, 0, 60)
+targetText.Position = UDim2.new(0.1, 0, 0.75, 0)
+targetText.BackgroundTransparency = 1
+targetText.Text = "Current target: None\nTouchInterest: Not found\nLast action: None"
+targetText.TextColor3 = Color3.fromRGB(255, 255, 255)
+targetText.Font = Enum.Font.SourceSans
+targetText.TextSize = 12
+targetText.TextWrapped = true
+targetText.Parent = mainFrame
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = mainFrame
+
+local mainShadow = Instance.new("ImageLabel")
+mainShadow.Name = "Shadow"
+mainShadow.BackgroundTransparency = 1
+mainShadow.Size = mainFrame.Size + UDim2.new(0, 20, 0, 20)
+mainShadow.Position = mainFrame.Position - UDim2.new(0, 10, 0, 10)
+mainShadow.Image = "rbxassetid://1316045217"
+mainShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+mainShadow.ImageTransparency = 0.7
+mainShadow.ScaleType = Enum.ScaleType.Slice
+mainShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+mainShadow.ZIndex = -1
+mainShadow.Parent = mainFrame
+
+local string_find = string.find
+local function isTargetPart(part)
+    return (IsA(part, "MeshPart") or IsA(part, "Part")) and string_find(part.Name, SEARCH_PATTERN)
+end
+
+local function findTouchInterest(part)
+    local children = GetChildren(part)
+    for i = 1, #children do
+        local child = children[i]
+        if IsA(child, "TouchTransmitter") or child.Name == "TouchInterest" then
+            return child
+        end
+    end
+    return nil
+end
+
+local function activateTouchInterest(part)
+    if not humanoidRootPart or not humanoidRootPart:IsDescendantOf(workspace) then return false, "No HumanoidRootPart" end
+    local touchInterest = findTouchInterest(part)
+    if not touchInterest then return false, "No TouchInterest" end
+    firetouchinterest(humanoidRootPart, part, 1)
+    firetouchinterest(humanoidRootPart, part, 0)
+    return true, "Activated"
+end
+
+local function teleportToTarget(target)
+    if not character or not target or not target:IsDescendantOf(workspace) then return false end
+    local teleportPosition = target.Position + Vector3.new(0, 5, 0)
+    character:SetPrimaryPartCFrame(CFrame.new(teleportPosition))
+    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Position)
+    return true
+end
+
+local function processTarget(target)
+    if not target or not target:IsDescendantOf(workspace) or processing then return end
+    if clock() - lastProcessTime < DEBOUNCE_TIME then return end
+
+    fillStartTime = tick()
+    restartAfterFull = false
+
+    processing = true
+	restartFillTimer()
+    lastProcessTime = clock()
+    currentTarget = target
+
+    if not FindFirstChild(target, "Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.Parent = target
+    end
+
+    local success, message = activateTouchInterest(target)
+    local teleportStatus = "Not used"
+
+    if USE_TELEPORT then
+        teleportStatus = teleportToTarget(target) and "Teleported" or "Teleport failed"
+    end
+
+    targetText.Text = string.format("Current target: %s\nTouchInterest: %s\nLast action: %s | %s", target.Name, findTouchInterest(target) and "Found" or "Not found", success and "Activated" or "Activation failed", teleportStatus)
+
+    processing = false
+end
+
+local lastCheckTime = 0
+local foundObjects = {}
+local function findTargetPart()
+    if #foundObjects > 0 then
+        for i = #foundObjects, 1, -1 do
+            local obj = foundObjects[i]
+            if obj and obj:IsDescendantOf(workspace) then
+                return obj
+            else
+                remove(foundObjects, i)
+            end
+        end
+    end
+    if clock() - lastCheckTime > FULL_SCAN_INTERVAL then
+        foundObjects = {}
+        local descendants = GetDescendants(workspace)
+        for i = 1, #descendants do
+            local part = descendants[i]
+            if isTargetPart(part) then
+                insert(foundObjects, part)
+            end
+        end
+        lastCheckTime = clock()
+    end
+    return foundObjects[1]
+end
+
+local function toggleAutoActivation()
+    autoActivateEnabled = not autoActivateEnabled
+
+    if autoActivateEnabled then
+        toggleActivateButton.Text = "Disable Auto-Activation"
+        statusText.Text = "Status: On\nSearching for targets..."
+        statusText.TextColor3 = Color3.fromRGB(0, 255, 0)
+
+        Spawn(function()
+            while autoActivateEnabled do
+                local target = findTargetPart()
+                if target then
+                    processTarget(target)
+                    statusText.Text = "Status: On\nProcessing target"
+                    repeat
+                        if not target:IsDescendantOf(workspace) then break end
+                        Wait(DEBOUNCE_TIME)
+                    until not autoActivateEnabled
+                else
+                    statusText.Text = "Status: On\nWaiting for target..."
+                    Wait(CHECK_INTERVAL)
+                end
+            end
+        end)
+    else
+        toggleActivateButton.Text = "Enable Auto-Activation"
+        statusText.Text = "Status: Off"
+        statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        targetText.Text = "Current target: None\nTouchInterest: Not found\nLast action: None"
+        currentTarget = nil
+    end
+end
+
+-- UI Event Handlers
+toggleActivateButton.MouseButton1Click:Connect(toggleAutoActivation)
+toggleButton.MouseButton1Click:Connect(function()
+    menuActive = not menuActive
+    mainFrame.Visible = menuActive
+end)
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragOffset = mainFrame.AbsolutePosition - Vector2.new(input.Position.X, input.Position.Y)
+        menuDragging = true
+    end
+end)
+titleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        menuDragging = false
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if menuDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local newPosition = Vector2.new(input.Position.X, input.Position.Y) + dragOffset
+        mainFrame:TweenPosition(UDim2.new(0, newPosition.X, 0, newPosition.Y), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.1, true)
+    end
+end)
+workspace.DescendantRemoving:Connect(function(descendant)
+    if autoActivateEnabled and currentTarget and descendant == currentTarget then
+        statusText.Text = "Status: On\nTarget disappeared, searching new..."
+        currentTarget = nil
+    end
+end)
