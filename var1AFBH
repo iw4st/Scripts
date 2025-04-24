@@ -1,0 +1,443 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- Creating modern style GUI
+local EggFarmGUI = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Shadow = Instance.new("ImageLabel")
+local Header = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local CloseButton = Instance.new("ImageButton")
+local Divider = Instance.new("Frame")
+local ToggleButton = Instance.new("TextButton")
+local ButtonGlow = Instance.new("ImageLabel")
+local ButtonRound = Instance.new("UICorner")
+local StatusFrame = Instance.new("Frame")
+local StatusLabel = Instance.new("TextLabel")
+local StatusIcon = Instance.new("Frame")
+local StatusRound = Instance.new("UICorner")
+local EggCountFrame = Instance.new("Frame")
+local EggCountLabel = Instance.new("TextLabel")
+local EggIcon = Instance.new("ImageLabel")
+local EggCountRound = Instance.new("UICorner")
+local MainRound = Instance.new("UICorner")
+local HeaderRound = Instance.new("UICorner")
+-- Adding progress bar
+local ProgressBarFrame = Instance.new("Frame")
+local ProgressBar = Instance.new("Frame")
+local ProgressBarRound = Instance.new("UICorner")
+local ProgressBarBackRound = Instance.new("UICorner")
+local ProgressLabel = Instance.new("TextLabel")
+
+-- Setting up main components
+EggFarmGUI.Name = "EggFarmGUI"
+EggFarmGUI.Parent = game.CoreGui
+EggFarmGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main frame with shadow
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = EggFarmGUI
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 4, 20) -- Dark color scheme
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.8, -150, 0.5, -125)
+MainFrame.Size = UDim2.new(0, 300, 0, 250) -- Increased height to fix overlapping
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+
+-- Rounded corners for main frame
+MainRound.CornerRadius = UDim.new(0, 12)
+MainRound.Parent = MainFrame
+
+-- Shadow for main frame
+Shadow.Name = "Shadow"
+Shadow.Parent = MainFrame
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.BackgroundTransparency = 1
+Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.ZIndex = -1
+Shadow.Image = "rbxassetid://5554236805"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
+
+-- GUI header
+Header.Name = "Header"
+Header.Parent = MainFrame
+Header.BackgroundColor3 = Color3.fromRGB(16, 8, 32) -- Slightly lighter than main color
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BorderSizePixel = 0
+
+-- Rounded corners only for the top corners of header
+HeaderRound.CornerRadius = UDim.new(0, 12)
+HeaderRound.Parent = Header
+
+-- Title
+Title.Name = "Title"
+Title.Parent = Header
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "BH EGG FARM"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16.0
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Close button
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = Header
+CloseButton.BackgroundTransparency = 1
+CloseButton.Position = UDim2.new(1, -35, 0.5, -10)
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Image = "rbxassetid://3926305904"
+CloseButton.ImageRectOffset = Vector2.new(284, 4)
+CloseButton.ImageRectSize = Vector2.new(24, 24)
+CloseButton.ImageColor3 = Color3.fromRGB(255, 100, 100)
+
+-- Divider
+Divider.Name = "Divider"
+Divider.Parent = MainFrame
+Divider.BackgroundColor3 = Color3.fromRGB(40, 20, 80) -- Accent color
+Divider.BorderSizePixel = 0
+Divider.Position = UDim2.new(0, 15, 0, 50)
+Divider.Size = UDim2.new(1, -30, 0, 1)
+
+-- Toggle button with glow
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = MainFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 20, 80) -- Accent color
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Position = UDim2.new(0.5, -100, 0, 70)
+ToggleButton.Size = UDim2.new(0, 200, 0, 45)
+ToggleButton.Font = Enum.Font.GothamSemibold
+ToggleButton.Text = "Enable"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 16.0
+
+-- Rounded corners for button
+ButtonRound.CornerRadius = UDim.new(0, 8)
+ButtonRound.Parent = ToggleButton
+
+-- Glow for button
+ButtonGlow.Name = "ButtonGlow"
+ButtonGlow.Parent = ToggleButton
+ButtonGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+ButtonGlow.BackgroundTransparency = 1
+ButtonGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
+ButtonGlow.Size = UDim2.new(1, 10, 1, 10)
+ButtonGlow.ZIndex = -1
+ButtonGlow.Image = "rbxassetid://5554236805"
+ButtonGlow.ImageColor3 = Color3.fromRGB(40, 20, 80)
+ButtonGlow.ImageTransparency = 0.7
+ButtonGlow.ScaleType = Enum.ScaleType.Slice
+ButtonGlow.SliceCenter = Rect.new(23, 23, 277, 277)
+
+-- Progress bar frame (new element)
+ProgressBarFrame.Name = "ProgressBarFrame"
+ProgressBarFrame.Parent = MainFrame
+ProgressBarFrame.BackgroundColor3 = Color3.fromRGB(16, 8, 32)
+ProgressBarFrame.BorderSizePixel = 0
+ProgressBarFrame.Position = UDim2.new(0.5, -100, 0, 125)
+ProgressBarFrame.Size = UDim2.new(0, 200, 0, 15)
+
+-- Rounded corners for progress bar background
+ProgressBarBackRound.CornerRadius = UDim.new(0, 8)
+ProgressBarBackRound.Parent = ProgressBarFrame
+
+-- Progress bar itself
+ProgressBar.Name = "ProgressBar"
+ProgressBar.Parent = ProgressBarFrame
+ProgressBar.BackgroundColor3 = Color3.fromRGB(100, 50, 180) -- Purple progress color
+ProgressBar.BorderSizePixel = 0
+ProgressBar.Size = UDim2.new(0, 0, 1, 0) -- Initially empty
+
+-- Rounded corners for progress bar
+ProgressBarRound.CornerRadius = UDim.new(0, 8)
+ProgressBarRound.Parent = ProgressBar
+
+-- Text for progress bar
+ProgressLabel.Name = "ProgressLabel"
+ProgressLabel.Parent = MainFrame
+ProgressLabel.BackgroundTransparency = 1
+ProgressLabel.Position = UDim2.new(0, 15, 0, 145)
+ProgressLabel.Size = UDim2.new(1, -30, 0, 20)
+ProgressLabel.Font = Enum.Font.Gotham
+ProgressLabel.Text = "Next egg: Calculating..."
+ProgressLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+ProgressLabel.TextSize = 12.0
+ProgressLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Status frame
+StatusFrame.Name = "StatusFrame"
+StatusFrame.Parent = MainFrame
+StatusFrame.BackgroundColor3 = Color3.fromRGB(16, 8, 32) -- Slightly lighter than main color
+StatusFrame.BorderSizePixel = 0
+StatusFrame.Position = UDim2.new(0, 15, 0, 170)
+StatusFrame.Size = UDim2.new(1, -30, 0, 30)
+
+-- Rounded corners for status frame
+StatusRound.CornerRadius = UDim.new(0, 6)
+StatusRound.Parent = StatusFrame
+
+-- Status indicator
+StatusIcon.Name = "StatusIcon"
+StatusIcon.Parent = StatusFrame
+StatusIcon.BackgroundColor3 = Color3.fromRGB(255, 80, 80) -- Red (disabled)
+StatusIcon.Position = UDim2.new(0, 10, 0.5, -5)
+StatusIcon.Size = UDim2.new(0, 10, 0, 10)
+StatusIcon.BorderSizePixel = 0
+
+-- Rounded indicator
+local StatusIconRound = Instance.new("UICorner")
+StatusIconRound.CornerRadius = UDim.new(1, 0) -- Round indicator
+StatusIconRound.Parent = StatusIcon
+
+-- Status text
+StatusLabel.Name = "StatusLabel"
+StatusLabel.Parent = StatusFrame
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Position = UDim2.new(0, 30, 0, 0)
+StatusLabel.Size = UDim2.new(1, -30, 1, 0)
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Text = "Status: Disabled"
+StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusLabel.TextSize = 14.0
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Egg counter frame
+EggCountFrame.Name = "EggCountFrame"
+EggCountFrame.Parent = MainFrame
+EggCountFrame.BackgroundColor3 = Color3.fromRGB(16, 8, 32) -- Slightly lighter than main color
+EggCountFrame.BorderSizePixel = 0
+EggCountFrame.Position = UDim2.new(0, 15, 0, 210)
+EggCountFrame.Size = UDim2.new(1, -30, 0, 30)
+
+-- Rounded corners for counter frame
+EggCountRound.CornerRadius = UDim.new(0, 6)
+EggCountRound.Parent = EggCountFrame
+
+-- Egg icon
+EggIcon.Name = "EggIcon"
+EggIcon.Parent = EggCountFrame
+EggIcon.BackgroundTransparency = 1
+EggIcon.Position = UDim2.new(0, 10, 0.5, -10)
+EggIcon.Size = UDim2.new(0, 20, 0, 20)
+EggIcon.Image = "rbxassetid://7734010488" -- Egg image or similar
+EggIcon.ImageColor3 = Color3.fromRGB(255, 255, 100)
+
+-- Egg counter
+EggCountLabel.Name = "EggCountLabel"
+EggCountLabel.Parent = EggCountFrame
+EggCountLabel.BackgroundTransparency = 1
+EggCountLabel.Position = UDim2.new(0, 40, 0, 0)
+EggCountLabel.Size = UDim2.new(1, -40, 1, 0)
+EggCountLabel.Font = Enum.Font.GothamSemibold
+EggCountLabel.Text = "Eggs: 0"
+EggCountLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+EggCountLabel.TextSize = 14.0
+EggCountLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Progress bar logic and egg spawn interval calculation
+local eggSpawnTimes = {}
+local estimatedInterval = 30 -- Set fixed interval to 30 seconds
+local lastEggTime = os.time()
+local progressTween = nil
+
+-- Function to update progress bar
+local function updateProgressBar(elapsed, total)
+    if progressTween then
+        progressTween:Cancel()
+    end
+    
+    -- Reset progress bar
+    ProgressBar.Size = UDim2.new(0, 0, 1, 0)
+    
+    -- Create fill animation
+    progressTween = game:GetService("TweenService"):Create(
+        ProgressBar,
+        TweenInfo.new(total, Enum.EasingStyle.Linear),
+        {Size = UDim2.new(1, 0, 1, 0)}
+    )
+    
+    progressTween:Play()
+    
+    -- Update time information text
+    spawn(function()
+        while progressTween and progressTween.PlaybackState == Enum.PlaybackState.Playing do
+            local remainingTime = math.max(0, total - (os.time() - lastEggTime))
+            ProgressLabel.Text = "Next egg: " .. remainingTime .. "s"
+            wait(0.5)
+        end
+    end)
+end
+
+-- Function to record egg spawn time - simplified to just use fixed interval
+local function recordEggSpawn()
+    local currentTime = os.time()
+    lastEggTime = currentTime
+    updateProgressBar(0, estimatedInterval)
+    
+    -- Update information
+    ProgressLabel.Text = "Next egg: " .. estimatedInterval .. "s"
+end
+
+-- Function to close GUI
+CloseButton.MouseButton1Click:Connect(function()
+    EggFarmGUI:Destroy()
+    if connection then
+        connection:Disconnect()
+    end
+    if progressTween then
+        progressTween:Cancel()
+    end
+    print("BH auto egg farm script stopped")
+end)
+
+-- Auto farm logic
+local isRunning = false
+local connection = nil
+
+-- Function to update egg counter
+local function updateEggCount()
+    local dataFolder = player:FindFirstChild("DataFolder")
+    if dataFolder then
+        local eggsCount = dataFolder:FindFirstChild("EggsCount")
+        if eggsCount and eggsCount:IsA("IntValue") then
+            EggCountLabel.Text = "Eggs: " .. tostring(eggsCount.Value)
+        else
+            EggCountLabel.Text = "Eggs: N/A"
+        end
+    else
+        EggCountLabel.Text = "Eggs: N/A"
+    end
+end
+
+-- Periodic egg counter updates
+spawn(function()
+    while wait(1) do
+        if not EggFarmGUI.Parent then break end
+        updateEggCount()
+    end
+end)
+
+local function collectEggs()
+    local ignored = workspace:FindFirstChild("Ignored")
+    if not ignored then
+        return
+    end
+    
+    local eggFound = false
+    
+    for _, child in pairs(ignored:GetChildren()) do
+        -- Check if object is a potential egg (by GUID name format)
+        if string.match(child.Name, "^{%x+%-%x+%-%x+%-%x+%-%x+}$") then
+            local egg = child
+            
+            if egg:IsA("Part") or egg:IsA("MeshPart") then
+                -- Collect egg using firetouchinterest
+                pcall(function()
+                    firetouchinterest(humanoidRootPart, egg, 0)
+                    wait(0.1)
+                    firetouchinterest(humanoidRootPart, egg, 1)
+                    StatusLabel.Text = "Status: Egg collected"
+                    updateEggCount() -- Update counter after collecting egg
+                    
+                    -- Record time and update progress bar
+                    recordEggSpawn()
+                    eggFound = true
+                end)
+            end
+        end
+    end
+    
+    return eggFound
+end
+
+local function startFarming()
+    if connection then
+        connection:Disconnect()
+    end
+    
+    -- Start progress bar with fixed 30 seconds
+    lastEggTime = os.time()
+    updateProgressBar(0, 30)
+    
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if isRunning then
+            collectEggs()
+        end
+    end)
+end
+
+local function toggleFarming()
+    isRunning = not isRunning
+    
+    if isRunning then
+        ToggleButton.Text = "Disable"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(180, 40, 60)
+        ButtonGlow.ImageColor3 = Color3.fromRGB(180, 40, 60)
+        StatusLabel.Text = "Status: Enabled"
+        StatusIcon.BackgroundColor3 = Color3.fromRGB(80, 255, 80) -- Green (enabled)
+        startFarming()
+    else
+        ToggleButton.Text = "Enable"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 20, 80)
+        ButtonGlow.ImageColor3 = Color3.fromRGB(40, 20, 80)
+        StatusLabel.Text = "Status: Disabled"
+        StatusIcon.BackgroundColor3 = Color3.fromRGB(255, 80, 80) -- Red (disabled)
+        
+        -- Stop progress bar
+        if progressTween then
+            progressTween:Cancel()
+        end
+        ProgressBar.Size = UDim2.new(0, 0, 1, 0)
+        ProgressLabel.Text = "Next egg: Disabled"
+    end
+end
+
+-- Button hover effect
+ToggleButton.MouseEnter:Connect(function()
+    game:GetService("TweenService"):Create(ToggleButton, TweenInfo.new(0.3), {
+        BackgroundColor3 = (isRunning and Color3.fromRGB(200, 50, 70) or Color3.fromRGB(60, 30, 100))
+    }):Play()
+    ButtonGlow.ImageTransparency = 0.5
+end)
+
+ToggleButton.MouseLeave:Connect(function()
+    game:GetService("TweenService"):Create(ToggleButton, TweenInfo.new(0.3), {
+        BackgroundColor3 = (isRunning and Color3.fromRGB(180, 40, 60) or Color3.fromRGB(40, 20, 80))
+    }):Play()
+    ButtonGlow.ImageTransparency = 0.7
+end)
+
+ToggleButton.MouseButton1Click:Connect(toggleFarming)
+
+-- Character switch handling
+player.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+end)
+
+-- Auto-collection every 30 seconds (in addition to continuous scanning)
+spawn(function()
+    while wait(30) do
+        if not EggFarmGUI.Parent then break end -- Check if GUI still exists
+        if isRunning then
+            local collected = collectEggs()
+            
+            -- If no egg was found in continuous scanning,
+            -- but enough time has passed since last egg, expect it soon
+            if not collected and os.time() - lastEggTime >= 28 then
+                ProgressLabel.Text = "Next egg: Expected soon..."
+            end
+        end
+    end
+end)
+
+-- Update counter on script start
+updateEggCount()
+
+print("BH auto egg farm script loaded!")
