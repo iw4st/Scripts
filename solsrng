@@ -1,0 +1,115 @@
+if game:GetService("CoreGui"):FindFirstChild("SolsEggFarmGUI") then
+    game:GetService("CoreGui"):FindFirstChild("SolsEggFarmGUI"):Destroy()
+end
+
+local Players             = game:GetService("Players")
+local PathfindingService  = game:GetService("PathfindingService")
+local RunService          = game:GetService("RunService")
+local UserInputService    = game:GetService("UserInputService")
+local TweenService        = game:GetService("TweenService")
+local CoreGui             = game:GetService("CoreGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local HttpService         = game:GetService("HttpService")
+
+local player    = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid  = character:WaitForChild("Humanoid")
+local rootPart  = character:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid  = char:WaitForChild("Humanoid")
+    rootPart  = char:WaitForChild("HumanoidRootPart")
+end)
+
+local SETTINGS = {
+    SEARCH_INTERVAL    = 1,
+    PROMPT_DISTANCE    = 3,
+    PATH_RECOMPUTE_MAX = 5,
+    WALK_SPEED_BOOST   = 0,
+    AUTO_EQUIP_ABYSSAL = false,
+    MAX_EGG_HEIGHT     = 130,
+}
+
+local CONFIG_FILE = "SolsRngSettingsV2.json"
+
+local function saveConfig()
+    if writefile then
+        pcall(function()
+            writefile(CONFIG_FILE, HttpService:JSONEncode(SETTINGS))
+        end)
+    end
+end
+
+local function loadConfig()
+    if readfile and isfile and isfile(CONFIG_FILE) then
+        pcall(function()
+            local decoded = HttpService:JSONDecode(readfile(CONFIG_FILE))
+            if decoded then
+                for k, v in pairs(decoded) do
+                    if SETTINGS[k] ~= nil then
+                        SETTINGS[k] = v
+                    end
+                end
+            end
+        end)
+    end
+end
+
+loadConfig()
+
+local STATE = {
+    running       = false,
+    eggsCollected = 0,
+    currentTarget = "—",
+    currentEggInstance = nil,
+    status        = "Stopped",
+    eggsFound     = 0,
+}
+
+local ignoredEggs = setmetatable({}, {__mode = "k"})
+
+game:GetService("LogService").MessageOut:Connect(function(message, messageType)
+    if message:match("Invalid egg") and STATE.currentEggInstance then
+        ignoredEggs[STATE.currentEggInstance] = true
+    end
+end)
+
+local EGG_PATTERNS = {
+    "^point_egg_%d+$",
+    "^random_potion_egg_%d+$",
+}
+
+local EXCLUDED_ZONES = {
+    { center = Vector3.new(55.676, 102.85, -594.476), radius = 100 },
+}
+
+local COLORS = {
+    bg         = Color3.fromRGB(18, 18, 24),
+    panel      = Color3.fromRGB(26, 26, 36),
+    card       = Color3.fromRGB(34, 34, 48),
+    accent     = Color3.fromRGB(110, 60, 255),
+    accentGlow = Color3.fromRGB(140, 90, 255),
+    green      = Color3.fromRGB(50, 205, 100),
+    red        = Color3.fromRGB(235, 70, 80),
+    orange     = Color3.fromRGB(255, 165, 50),
+    textMain   = Color3.fromRGB(230, 230, 240),
+    textDim    = Color3.fromRGB(130, 130, 155),
+    logBg      = Color3.fromRGB(14, 14, 20),
+    border     = Color3.fromRGB(55, 55, 80),
+}
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SolsEggFarmGUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+pcall(function() screenGui.Parent = CoreGui end)
+if not screenGui.Parent then
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+end
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "Main"
+mainFrame.Size = UDim2.new(0, 340, 0, 496)
+mainFra
