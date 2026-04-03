@@ -83,6 +83,7 @@ local EGG_PATTERNS = {
 local EXCLUDED_ZONES = {
     { center = Vector3.new(55.676, 102.85, -594.476), radius = 100 },
     { center = Vector3.new(-5.43, 95.6, -83.26), radius = 50 },
+    { center = Vector3.new(16.326, 93.75, -438.988), radius = 20 },
 }
 
 local COLORS = {
