@@ -20,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VIM = game:GetService("VirtualInputManager")
 local player = game.Players.LocalPlayer
 local pgui = player.PlayerGui
+local UserInputService = game:GetService("UserInputService")
 
 local enabledQTE = false
 local enabledAutoStart = false
@@ -241,6 +242,37 @@ spawn(function()
             end)
         end
         task.wait(2)
+    end
+end)
+
+-- === KEYBINDS ===
+local isGuiVisible = true
+
+local binds = {
+    AutoStart = Enum.KeyCode.F1,
+    AutoMinigame = Enum.KeyCode.F2,
+    AutoSell = Enum.KeyCode.F3
+}
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
+        local rCtrlDown = UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+        
+        if rCtrlDown then
+            isGuiVisible = not isGuiVisible
+            mainFrame.Visible = isGuiVisible
+        end
+    end
+        
+    if input.KeyCode == binds.AutoStart then
+        enabledAutoStart = not enabledAutoStart
+        setStart(enabledAutoStart)
+    elseif input.KeyCode == binds.AutoMinigame then
+        enabledQTE = not enabledQTE
+        setQTE(enabledQTE)
+    elseif input.KeyCode == binds.AutoSell then
+        enabledAutoSell = not enabledAutoSell
+        setSell(enabledAutoSell)
     end
 end)
 
