@@ -79,7 +79,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 24)
 titleLabel.Position = UDim2.new(0, 0, 0, 2)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "⚡ Shipwright Auto"
+titleLabel.Text = "Shells auto farm"
 titleLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
 titleLabel.TextSize = 13
 titleLabel.Font = Enum.Font.GothamBold
@@ -155,7 +155,7 @@ local function createToggle(name, yPos, callback)
     return set
 end
 
-local setQTE = createToggle("Auto QTE", 28, function(v) enabledQTE = v end)
+local setQTE = createToggle("Auto Minigame", 28, function(v) enabledQTE = v end)
 local setStart = createToggle("Auto Start", 56, function(v) enabledAutoStart = v end)
 local setSell = createToggle("Auto Sell", 84, function(v) enabledAutoSell = v end)
 
@@ -231,17 +231,31 @@ end)
 -- === AUTO SELL ===
 spawn(function()
     print("[v10] Auto Sell запущен")
+    local Event = ReplicatedStorage:WaitForChild("ByteNetReliable")
     while not _G.StopQTE do
         if enabledAutoSell then
             pcall(function()
-                local Event = ReplicatedStorage:FindFirstChild("ByteNetReliable")
-                if Event then
-                    Event:FireServer(buffer.fromstring("4"), nil)
+                local char = player.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local merchant = workspace.Map["Bay Island"].NPCs.Merchant
+                local merchantPos = merchant:IsA("Model") 
+                    and (merchant.PrimaryPart or merchant:FindFirstChild("HumanoidRootPart"))
+                    or merchant
+
+                if hrp and merchantPos then
+                    local savedCF = hrp.CFrame
+                    hrp.CFrame = merchantPos.CFrame * CFrame.new(0, -15, 0)
+                    task.wait(0.3)
+                    Event:FireServer(buffer.fromstring("9"), nil)
+                    task.wait(0.1)
+                    hrp.CFrame = savedCF
                 end
             end)
         end
-        task.wait(2)
+        task.wait(30)
     end
 end)
+
+
 
 print("[v10] Всё готово!")
