@@ -166,51 +166,99 @@ local prevDiff = 999
 local clicked = false
 local prevLineRot = nil
 local qteLineMoving = false
+local targetBarCache = nil
+local lastBarCheck = 0
+local crossingDirection = 0
+local lastRot = nil
+local wasOutsideTarget = true
 
-_G.QTEConnection = RunService.RenderStepped:Connect(function()
+_G.QTEConnection = RunService.Heartbeat:Connect(function()
     if not enabledQTE then
         prevDiff = 999
         clicked = false
+        targetBarCache = nil
+        crossingDirection = 0
+        lastRot = nil
+        wasOutsideTarget = true
         return
     end
 
     pcall(function()
         local qte = pgui:FindFirstChild("QTE")
-        if not qte then prevDiff = 999; clicked = false; qteLineMoving = false return end
+        if not qte then
+            prevDiff = 999
+            clicked = false
+            qteLineMoving = false
+            targetBarCache = nil
+            crossingDirection = 0
+            lastRot = nil
+            wasOutsideTarget = true
+            return
+        end
+
         local main = qte:FindFirstChild("Main")
-        if not main then qteLineMoving = false return end
+        if not main then
+            qteLineMoving = false
+            targetBarCache = nil
+            crossingDirection = 0
+            wasOutsideTarget = true
+            return
+        end
+
         local line = main:FindFirstChild("Line")
         local bars = main:FindFirstChild("Bars")
-        if not line or not bars then qteLineMoving = false return end
+        if not line or not bars then
+            qteLineMoving = false
+            targetBarCache = nil
+            crossingDirection = 0
+            wasOutsideTarget = true
+            return
+        end
 
-        -- Проверяем вращается ли линия (мини-игра активна)
         local lineRot = line.Rotation
         if prevLineRot ~= nil then
-            qteLineMoving = math.abs(lineRot - prevLineRot) > 0.1
+            qteLineMoving = math.abs(lineRot - prevLineRot) > 0.04
+            if lastRot ~= nil then
+                local delta = lineRot - lastRot
+                if delta > 180 then delta = delta - 360 end
+                if delta < -180 then delta = delta + 360 end
+                crossingDirection = delta > 0 and 1 or -1
+            end
         end
         prevLineRot = lineRot
+        lastRot = lineRot
 
-        local targetBar
-        for _, bar in pairs(bars:GetChildren()) do
-            if bar:IsA("ImageLabel") and bar.Visible then
-                targetBar = bar
-                break
+        local currentTime = tick()
+        if not targetBarCache or not targetBarCache.Parent or (currentTime - lastBarCheck) > 0.01 then
+            targetBarCache = nil
+            for _, bar in pairs(bars:GetChildren()) do
+                if bar:IsA("ImageLabel") and bar.Visible then
+                    targetBarCache = bar
+                    break
+                end
             end
-        end
-        if not targetBar then prevDiff = 999; clicked = false return end
-
-        local diff = angleDiff(lineRot, targetBar.Rotation)
-        local barSize = tonumber(targetBar.Name:match("%d+")) or 15
-
-        if not clicked and diff <= barSize / 2 then
-            if diff > prevDiff then
-                safeVIMClick()
-                clicked = true
-            end
+            lastBarCheck = currentTime
         end
 
-        if diff > barSize then
+        if not targetBarCache then
+            prevDiff = 999
             clicked = false
+            wasOutsideTarget = true
+            return
+        end
+
+        local diff = angleDiff(lineRot, targetBarCache.Rotation)
+        local barSize = tonumber(targetBarCache.Name:match("%d+")) or 15
+        local inTarget = diff <= barSize / 2
+
+        if not clicked and inTarget and wasOutsideTarget then
+            safeVIMClick()
+            clicked = true
+        elseif not inTarget then
+            clicked = false
+            wasOutsideTarget = true
+        else
+            wasOutsideTarget = false
         end
 
         prevDiff = diff
@@ -238,7 +286,7 @@ spawn(function()
                 local char = player.Character
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
                 local merchant = workspace.Map["Bay Island"].NPCs.Merchant
-                local merchantPos = merchant:IsA("Model") 
+                local merchantPos = merchant:IsA("Model")
                     and (merchant.PrimaryPart or merchant:FindFirstChild("HumanoidRootPart"))
                     or merchant
 
@@ -255,7 +303,5 @@ spawn(function()
         task.wait(30)
     end
 end)
-
-
 
 print("[v10] Всё готово!")
