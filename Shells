@@ -217,7 +217,7 @@ _G.QTEConnection = RunService.Heartbeat:Connect(function()
 
         local lineRot = line.Rotation
         if prevLineRot ~= nil then
-            qteLineMoving = math.abs(lineRot - prevLineRot) > 0.04
+            qteLineMoving = math.abs(lineRot - prevLineRot) > 0.08
             if lastRot ~= nil then
                 local delta = lineRot - lastRot
                 if delta > 180 then delta = delta - 360 end
@@ -225,7 +225,7 @@ _G.QTEConnection = RunService.Heartbeat:Connect(function()
                 crossingDirection = delta > 0 and 1 or -1
             end
         end
-        prevLineRot = lineRot
+        prevLineRot = lineRot    
         lastRot = lineRot
 
         local currentTime = tick()
